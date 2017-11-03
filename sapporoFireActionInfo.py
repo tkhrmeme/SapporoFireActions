@@ -21,15 +21,15 @@ def getSoupFromURL(url):
 		req = urllib.request.urlopen(url)
 		soup = BeautifulSoup(req.read(), "lxml")
 	except IOError as e:
-		print(e)
+		sys.stderr.write(e)
 	except urllib.error.HTTPError as e:
-		print(e)
+		sys.stderr.write(e)
 	return soup
 
 soup = getSoupFromURL(url)
 
 if soup is None:
-	sys.stdout.write("Cannot get a soup.")
+	sys.stderr.write("Cannot get a soup.")
 	sys.exit()
 
 sys.stdout.write("Load a soup from {}\n".format(url))
