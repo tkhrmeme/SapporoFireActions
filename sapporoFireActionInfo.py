@@ -34,19 +34,24 @@ if soup is None:
 
 sys.stdout.write("Load a soup from {}\n".format(url))
 
+# コンテンツ部分のdiv要素を取り出す
 div = soup.find('div', id="tmp_contents")
 
+# 過去の出動情報のテーブル
 table = div.find('table')
 
+# テーブルの行リスト
 tr_list = table.find_all('tr')
 
+# 2行目のセルのリスト
 td_list = tr_list[1].find_all('td')
 
 action_info = {}
 action_name = None
 adress_list = None
 
-td = td_list[1] # 昨日
+td = td_list[1] # 昨日のセル
+
 for data in td.contents:
 	if type(data) == element.NavigableString:
 		s = data.string.strip()
@@ -66,18 +71,22 @@ for data in td.contents:
 if action_name is not None:
 	action_info[action_name] = adress_list
 
+# 昨日の日付
 dt = datetime.today()
 ayer = dt + timedelta(hours=-24)
 
 action_info['date'] = datetime.strftime(ayer, "%Y%m%d")
 
+# カレントワーキングディレクトリ
 dir_path = os.getcwd()
 
+# JSONのファイル名
 filename = '{yy}{mm:02d}{dd:02d}.json'.format(yy=ayer.year, mm=ayer.month, dd=ayer.day)
 
 path = os.path.join(dir_path, filename)
 
 if not os.path.exists(path):
+	# 新規ファイル保存
 	with open(path, 'w') as fp:
 		json.dump(action_info, fp, ensure_ascii=False, indent=None)
 		sys.stdout.write("Save {}\n".format(filename))
