@@ -13,7 +13,47 @@ from bs4 import element
 from datetime import datetime
 from datetime import timedelta
 
-url = 'http://www.119.city.sapporo.jp/saigai/sghp.html'
+url_saigai = 'http://www.119.city.sapporo.jp/saigai/sghp.html'
+url_geocode = "http://geocode.csis.u-tokyo.ac.jp/cgi-bin/simple_geocode.cgi"
+
+import urllib.request
+import xml.etree.ElementTree as ET
+
+def geocodingForAddress(addressStr):
+	'''
+	CSISシンプルジオコーディング実験利用
+		http://newspat.csis.u-tokyo.ac.jp/geocode/modules/geocode/index.php
+		
+	series=[ADDRESS, STATION, PLACE, FACILITY]
+	constraint=''
+	'''
+
+	reqStr = "札幌市" + addressStr
+	url_addr = urllib.parse.quote(reqStr)
+	url_param = "?addr={addr}&charset=UTF8&geosys=world&series=ADDRESS".format(addr=url_addr)
+	url = url_geocode + url_param
+
+	result = None
+	try:
+		req = urllib.request.Request(url)
+		res = urllib.request.urlopen(req)
+
+		result = res.read().decode('utf-8')
+	except urllib.error.URLError as e:
+		sys.stderr.write(e)
+	except urllib.error.HTTPError as e:
+		sys.stderr.write(e)
+
+	return result
+
+def getCandidateLocation(rootXML):
+	loc = None
+	candidate = rootXML.find('candidate')
+	if candidate is not None:
+		lon = candidate.find('longitude')
+		lat = candidate.find('latitude')
+		loc = (float(lon.text), float(lat.text))
+	return loc
 
 def getSoupFromURL(url):
 	soup = None
@@ -26,13 +66,13 @@ def getSoupFromURL(url):
 		sys.stderr.write(e)
 	return soup
 
-soup = getSoupFromURL(url)
+soup = getSoupFromURL(url_saigai)
 
 if soup is None:
 	sys.stderr.write("Cannot get a soup.")
 	sys.exit()
 
-sys.stdout.write("Load a soup from {}\n".format(url))
+sys.stdout.write("Load a soup from {}\n".format(url_saigai))
 
 # コンテンツ部分のdiv要素を取り出す
 div = soup.find('div', id="tmp_contents")
