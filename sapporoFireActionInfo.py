@@ -16,9 +16,6 @@ from datetime import timedelta
 url_saigai = 'http://www.119.city.sapporo.jp/saigai/sghp.html'
 url_geocode = "http://geocode.csis.u-tokyo.ac.jp/cgi-bin/simple_geocode.cgi"
 
-import urllib.request
-import xml.etree.ElementTree as ET
-
 def geocodingForAddress(addressStr):
 	'''
 	CSISシンプルジオコーディング実験利用
@@ -48,11 +45,13 @@ def geocodingForAddress(addressStr):
 
 def getCandidateLocation(rootXML):
 	loc = None
-	candidate = rootXML.find('candidate')
+
+	root = BeautifulSoup(rootXML, "lxml")
+	candidate = root.find('candidate')
 	if candidate is not None:
 		lon = candidate.find('longitude')
 		lat = candidate.find('latitude')
-		loc = (float(lon.text), float(lat.text))
+		loc = (float(lon.string), float(lat.string))
 	return loc
 
 def getSoupFromURL(url):
@@ -88,8 +87,7 @@ def parseText(sourceText):
 
 					# 住所から経緯度をジオコーディング
 					resultXML = geocodingForAddress(adrs)
-					root = ET.fromstring(resultXML)
-					loc = getCandidateLocation(root)
+					loc = getCandidateLocation(resultXML)
 					adress_list.append((adrs, loc, tthm))
 
 	if action_name is not None:
