@@ -66,69 +66,85 @@ def getSoupFromURL(url):
 		sys.stderr.write(e)
 	return soup
 
-soup = getSoupFromURL(url_saigai)
+def parseText(sourceText):
+	action_info = {}
+	action_name = None
+	adress_list = None
 
-if soup is None:
-	sys.stderr.write("Cannot get a soup.")
-	sys.exit()
+	for data in td.contents:
+		if type(data) == element.NavigableString:
+			s = data.string.strip()
+			if len(s) > 0:
+				if s[0] == '●':
+					if action_name is not None:
+						action_info[action_name] = adress_list
+					adress_list = []
+					action_name = s[1:]
+				elif s[0] == '・':
+					u = s[1:]
+					p = u.find('（')
+					adrs = u[:p]
+					tthm = u[p+1:-1]
 
-sys.stdout.write("Load a soup from {}\n".format(url_saigai))
+					# 住所から経緯度をジオコーディング
+					resultXML = geocodingForAddress(adrs)
+					root = ET.fromstring(resultXML)
+					loc = getCandidateLocation(root)
+					adress_list.append((adrs, loc, tthm))
 
-# コンテンツ部分のdiv要素を取り出す
-div = soup.find('div', id="tmp_contents")
+	if action_name is not None:
+		action_info[action_name] = adress_list
+		
+	return action_info
 
-# 過去の出動情報のテーブル
-table = div.find('table')
+def saveJSON(info, dt):
+	# カレントワーキングディレクトリ
+	dir_path = os.getcwd()
 
-# テーブルの行リスト
-tr_list = table.find_all('tr')
+	# JSONのファイル名
+	filename = '{yy}{mm:02d}{dd:02d}.json'.format(yy=dt.year, mm=dt.month, dd=dt.day)
 
-# 2行目のセルのリスト
-td_list = tr_list[1].find_all('td')
+	path = os.path.join(dir_path, filename)
 
-action_info = {}
-action_name = None
-adress_list = None
+	if not os.path.exists(path):
+		# 新規ファイル保存
+		with open(path, 'w') as fp:
+			json.dump(info, fp, ensure_ascii=False, indent=None)
+			sys.stdout.write("Save {}\n".format(filename))
+	else:
+		sys.stdout.write("File already exists {}\n".format(filename))
 
-td = td_list[1] # 昨日のセル
+if __name__ == '__main__':
+	soup = getSoupFromURL(url_saigai)
 
-for data in td.contents:
-	if type(data) == element.NavigableString:
-		s = data.string.strip()
-		if len(s) > 0:
-			if s[0] == '●':
-				if action_name is not None:
-					action_info[action_name] = adress_list
-				adress_list = []
-				action_name = s[1:]
-			elif s[0] == '・':
-				u = s[1:]
-				p = u.find('（')
-				adrs = u[:p]
-				tthm = u[p+1:-1]
-				adress_list.append((adrs, tthm))
+	if soup is None:
+		sys.stderr.write("Cannot get a soup.")
+		sys.exit()
 
-if action_name is not None:
-	action_info[action_name] = adress_list
+	sys.stdout.write("Load a soup from {}\n".format(url_saigai))
 
-# 昨日の日付
-dt = datetime.today()
-ayer = dt + timedelta(hours=-24)
+	# コンテンツ部分のdiv要素を取り出す
+	div = soup.find('div', id="tmp_contents")
 
-action_info['date'] = datetime.strftime(ayer, "%Y%m%d")
+	# 過去の出動情報のテーブル
+	table = div.find('table')
 
-# カレントワーキングディレクトリ
-dir_path = os.getcwd()
+	# テーブルの行リスト
+	tr_list = table.find_all('tr')
 
-# JSONのファイル名
-filename = '{yy}{mm:02d}{dd:02d}.json'.format(yy=ayer.year, mm=ayer.month, dd=ayer.day)
+	# 2行目のセルのリスト
+	td_list = tr_list[1].find_all('td')
 
-path = os.path.join(dir_path, filename)
+	# 昨日のセル
+	td = td_list[1] 
 
-if not os.path.exists(path):
-	# 新規ファイル保存
-	with open(path, 'w') as fp:
-		json.dump(action_info, fp, ensure_ascii=False, indent=None)
-		sys.stdout.write("Save {}\n".format(filename))
-else:
-	sys.stdout.write("File already exists {}\n".format(filename))
+	action_info = parseText(td.contents)
+
+	dt = datetime.today()
+
+	# 昨日の日付
+	ayer = dt + timedelta(hours=-24)
+
+	action_info['date'] = datetime.strftime(ayer, "%Y%m%d")
+
+	saveJSON(action_info, ayer)
