@@ -11,3 +11,13 @@ http://www.119.city.sapporo.jp/saigai/sghp.html
 
 - CSISシンプルジオコーディング実験　(http://newspat.csis.u-tokyo.ac.jp/geocode/modules/geocode/index.php)
 - 街区レベル位置参照情報：　国土交通省 国土計画局　(http://nlftp.mlit.go.jp/isj/)
+
+### 実行環境
+
+- Python v3.6.1
+- BeautifulSoup 4.5.3
+
+### 実行
+
+python3 ./sapporoFireAction.py
+
