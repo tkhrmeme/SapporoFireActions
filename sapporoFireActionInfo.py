@@ -112,6 +112,49 @@ def saveJSON(info, dt):
 	else:
 		sys.stdout.write("File already exists {}\n".format(filename))
 
+def saveGeoJSON(info, dt):
+	filename = '{yy}{mm:02d}{dd:02d}.geojson'.format(yy=dt.year, mm=dt.month, dd=dt.day)
+
+	path = os.path.join(os.getcwd(), filename)
+
+	if os.path.exists(path):
+		sys.stdout.write("File already exists {}\n".format(filename))
+	else:
+		gj = {
+			"type":"FeatureCollection",
+			"crs": {"type":"name", "properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},
+			"features":[]
+		}
+
+		fc = []
+		for k, v in info.items():
+			for x in v:
+				dtstr = datetime.strftime(
+									datetime(dt.year, 
+										dt.month, 
+										dt.day, 
+										int(x[2][:2]), 
+										int(x[2][3:5])), 
+									"%Y-%m-%dT%H:%M:00+09:00")
+				ft = {
+					"type":"Feature",
+					"geometry": {
+						"type":"Point",
+						"coordinates":x[1]
+					},
+					"properties": {
+						"action":k,
+						"address":x[0],
+						"time": dtstr
+					}
+				}
+				fc.append(ft)
+		gj['features'] = fc
+
+		with open(filename, "w") as fp:
+			json.dump(gj, fp, ensure_ascii=False, indent=None)
+			sys.stdout.write("Save {}\n".format(filename))
+
 if __name__ == '__main__':
 	soup = getSoupFromURL(url_saigai)
 
@@ -143,6 +186,4 @@ if __name__ == '__main__':
 	# 昨日の日付
 	ayer = dt + timedelta(hours=-24)
 
-	action_info['date'] = datetime.strftime(ayer, "%Y%m%d")
-
-	saveJSON(action_info, ayer)
+	saveGeoJSON(action_info, ayer)
