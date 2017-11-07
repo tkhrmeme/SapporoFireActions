@@ -4,6 +4,7 @@
 import sys
 import os
 import json
+import argparse
 
 import urllib.request
 
@@ -100,7 +101,7 @@ def saveJSON(info, dt):
 	dir_path = os.getcwd()
 
 	# JSONのファイル名
-	filename = '{yy}{mm:02d}{dd:02d}.json'.format(yy=dt.year, mm=dt.month, dd=dt.day)
+	filename = 'data/{yy}{mm:02d}{dd:02d}.json'.format(yy=dt.year, mm=dt.month, dd=dt.day)
 
 	path = os.path.join(dir_path, filename)
 
@@ -113,7 +114,7 @@ def saveJSON(info, dt):
 		sys.stdout.write("File already exists {}\n".format(filename))
 
 def saveGeoJSON(info, dt):
-	filename = '{yy}{mm:02d}{dd:02d}.geojson'.format(yy=dt.year, mm=dt.month, dd=dt.day)
+	filename = 'data/{yy}{mm:02d}{dd:02d}.geojson'.format(yy=dt.year, mm=dt.month, dd=dt.day)
 
 	path = os.path.join(os.getcwd(), filename)
 
@@ -156,6 +157,12 @@ def saveGeoJSON(info, dt):
 			sys.stdout.write("Save {}\n".format(filename))
 
 if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-o','--out', action='store', default='geojson', choices=['geojson','json'])
+	parser.add_argument('-d','--day', action='store', default='yesterday', choices=['yesterday','today'])
+	args = parser.parse_args()
+	print(args)
+
 	soup = getSoupFromURL(url_saigai)
 
 	if soup is None:
@@ -176,14 +183,20 @@ if __name__ == '__main__':
 	# 2行目のセルのリスト
 	td_list = tr_list[1].find_all('td')
 
-	# 昨日のセル
-	td = td_list[1] 
+	dt = datetime.today()
+
+	if args.day == 'today':
+		# 今日のセル
+		td = td_list[0]
+	else:
+		# 昨日の日付
+		dt = dt + timedelta(hours=-24)
+		# 昨日のセル
+		td = td_list[1]
 
 	action_info = parseText(td.contents)
 
-	dt = datetime.today()
-
-	# 昨日の日付
-	ayer = dt + timedelta(hours=-24)
-
-	saveGeoJSON(action_info, ayer)
+	if args.out == 'json':
+		saveJSON(action_info, dt)
+	else:
+		saveGeoJSON(action_info, dt)
