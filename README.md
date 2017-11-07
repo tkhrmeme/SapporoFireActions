@@ -19,5 +19,16 @@ http://www.119.city.sapporo.jp/saigai/sghp.html
 
 ### 実行
 
-python3 ./sapporoFireAction.py
+python3 ./sapporoFireActionInfo.py
 
+引数でデータを取得する日と出力ファイル形式を選択可能．
+
+```
+usage: sapporoFireActionInfo.py [-h] [-o {geojson,json}]
+                                [-d {yesterday,today}]
+
+optional arguments:
+ -h, --help            show this help message and exit
+ -o {geojson,json}, --out {geojson,json}
+ -d {yesterday,today}, --day {yesterday,today}
+ ```
