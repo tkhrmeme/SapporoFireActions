@@ -38,9 +38,9 @@ def geocodingForAddress(addressStr):
 
 		result = res.read().decode('utf-8')
 	except urllib.error.URLError as e:
-		sys.stderr.write(e)
+		sys.stderr.write("URLError {}\n".format(url))
 	except urllib.error.HTTPError as e:
-		sys.stderr.write(e)
+		sys.stderr.write("HTTPError {}\n".format(url))
 
 	return result
 
@@ -58,12 +58,14 @@ def getCandidateLocation(rootXML):
 def getSoupFromURL(url):
 	soup = None
 	try:
-		req = urllib.request.urlopen(url)
-		soup = BeautifulSoup(req.read(), "lxml")
-	except IOError as e:
-		sys.stderr.write(e)
+		req = urllib.request.Request(url, method='GET')
+		res = urllib.request.urlopen(req)
+		if res.getcode() == 200:
+			soup = BeautifulSoup(res.read().decode('utf-8'), "lxml")
+	except urllib.error.URLError as e:
+		sys.stderr.write("URLError {}\n".format(url))
 	except urllib.error.HTTPError as e:
-		sys.stderr.write(e)
+		sys.stderr.write("HTTPError {}\n".format(url))
 	return soup
 
 def parseText(sourceText):
@@ -107,9 +109,15 @@ def saveJSON(info, dt):
 
 	if not os.path.exists(path):
 		# 新規ファイル保存
-		with open(path, 'w') as fp:
-			json.dump(info, fp, ensure_ascii=False, indent=None)
+		try:
+			with open(path, 'w', encoding='UTF-8') as fp:
+				json.dump(info, fp, indent=None, ensure_ascii=False)
 			sys.stdout.write("Save {}\n".format(filename))
+		except IOError as e:
+			sys.stderr.write("{}\n".format(e))
+		except UnicodeEncodeError as e:
+			sys.stderr.write("UnicodeEncodeError\n")
+
 	else:
 		sys.stdout.write("File already exists {}\n".format(filename))
 
@@ -152,21 +160,27 @@ def saveGeoJSON(info, dt):
 				fc.append(ft)
 		gj['features'] = fc
 
-		with open(filename, "w") as fp:
-			json.dump(gj, fp, ensure_ascii=False, indent=None)
-			sys.stdout.write("Save {}\n".format(filename))
+		try:
+			with open(filename, "w", encoding='UTF-8') as fp:
+				json.dump(gj, fp, ensure_ascii=False, indent=None)
+				sys.stdout.write("Save {}\n".format(filename))
+		except IOError as e:
+			sys.stderr.write("{}\n".format(e))
+		except UnicodeEncodeError as e:
+			sys.stderr.write("UnicodeEncodeError\n")
 
 if __name__ == '__main__':
+	sys.stdout.write(datetime.now().strftime("%Y-%m-%d %H:%M\n"))
+
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-o','--out', action='store', default='geojson', choices=['geojson','json'])
 	parser.add_argument('-d','--day', action='store', default='yesterday', choices=['yesterday','today'])
 	args = parser.parse_args()
-	print(args)
 
 	soup = getSoupFromURL(url_saigai)
 
 	if soup is None:
-		sys.stderr.write("Cannot get a soup.")
+		sys.stderr.write("Cannot get a soup.\n")
 		sys.exit()
 
 	sys.stdout.write("Load a soup from {}\n".format(url_saigai))
