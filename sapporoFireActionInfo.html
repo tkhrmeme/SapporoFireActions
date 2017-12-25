@@ -7,6 +7,12 @@
 	<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
 	<link href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" rel="stylesheet"/>
 
+	<script src="http://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
+
+	<script src='https://unpkg.com/leaflet.markercluster@1.2.0/dist/leaflet.markercluster.js'></script>
+	<link href="https://unpkg.com/leaflet.markercluster@1.2.0/dist/MarkerCluster.css" rel="stylesheet"/>
+	<link href="https://unpkg.com/leaflet.markercluster@1.2.0/dist/MarkerCluster.Default.css" rel="stylesheet"/>
+
 	<script src="https://d3js.org/d3.v4.min.js"></script>
 	<script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
 <style>
@@ -96,6 +102,7 @@ html, body  {
 	info.addTo(map);
 
 	//レジェンドの描画
+	/*
 	var legend = L.control({position: 'bottomleft'});
 	legend.onAdd = function (map) {
 		var div = L.DomUtil.create('div', 'info action'),
@@ -107,6 +114,33 @@ html, body  {
 	    return div;
 	};
 	legend.addTo(map);
+	*/
+
+	function geoJsonPoint(data){
+		var geoJson = L.geoJson(data,{
+			pointToLayer: function(geoJsonPoint, latlng) {
+				return L.circleMarker(latlng);
+				//return L.marker(latlng);
+			},
+			
+			style: function(feature) {
+				return {
+					"fillColor": getActionColor(feature), 
+					"fillOpacity":0.8,
+					"weight":1
+				};
+			},
+			
+			onEachFeature: function(feature, layer){
+				layer.bindPopup(
+					feature.properties.time +'<br/>' 
+					+feature.properties.action+'<br/>'
+					+feature.properties.address
+				);
+			}
+		});
+		return geoJson;
+	}
 
 	//geojsonを読み込んでマーカーを描画する
 	function addActionGroup(files,name){
@@ -117,47 +151,115 @@ html, body  {
 
 		files.forEach(function(file) {
 			d3.json(file, function(err, data) {
-				var geoJson = L.geoJson(data,{
-								pointToLayer: function(geoJsonPoint, latlng) {
-									return L.circleMarker(latlng);
-								},
-								style: function(feature) {
-									return {
-										"fillColor": getActionColor(feature), 
-										"fillOpacity":0.8,
-										"weight":1
-									};
-								},
-								onEachFeature: function(feature, layer){
-									layer.bindPopup(
-										feature.properties.time +'<br/>' 
-										+feature.properties.action+'<br/>'
-										+feature.properties.address
-									);
-								}
-							});
-				layerGroup.addLayer(geoJson);
+				layerGroup.addLayer(geoJsonPoint(data));
 			});
 		});
 	}
 
-	addActionGroup(["./data/20171201.geojson"],'12/01');
-	addActionGroup(["./data/20171202.geojson"],'12/02');
-	addActionGroup(["./data/20171203.geojson"],'12/03');
-	addActionGroup(["./data/20171204.geojson"],'12/04');
-	addActionGroup(["./data/20171205.geojson"],'12/05');
-	addActionGroup(["./data/20171205.geojson"],'12/05');
-	addActionGroup(["./data/20171206.geojson"],'12/06');
-	addActionGroup(["./data/20171207.geojson"],'12/07');
-	addActionGroup(["./data/20171208.geojson"],'12/08');
-	addActionGroup(["./data/20171209.geojson"],'12/09');
-	addActionGroup(["./data/20171210.geojson"],'12/10');
-	addActionGroup(["./data/20171211.geojson"],'12/11');
-	addActionGroup(["./data/20171212.geojson"],'12/12');
-	addActionGroup(["./data/20171213.geojson"],'12/13');
-	addActionGroup(["./data/20171214.geojson"],'12/14');
-	addActionGroup(["./data/20171215.geojson"],'12/15');
-	addActionGroup(["./data/20171216.geojson"],'12/16');
+	//geojsonを読み込んでマーカーをクラスタで描画する
+	function addMakerCluster(files)
+	{
+		var markerCluster = L.markerClusterGroup();
+
+		files.forEach(function(file) {
+			d3.json(file, function(err, data) {
+				//var maxDistance = 300;
+				//var clustered = turf.clustersDbscan(data, maxDistance);
+
+				var options = {numberOfClusters: 7};
+				var clustered = turf.clustersKmeans(data, options);
+
+				var cluster_0 = turf.getCluster(clustered, {cluster: 0});
+
+				clustered.features.forEach(function(f) {
+					console.log(f.properties.cluster);
+				});
+
+				var geoJson = geoJsonPoint(data);
+				markerCluster.addLayer(geoJson);
+			});
+		});
+		map.addLayer(markerCluster);
+	}
+
+	/*
+	addMakerCluster([
+		"./data/20171201.geojson",
+		"./data/20171202.geojson",
+		"./data/20171203.geojson",
+		"./data/20171204.geojson",
+		"./data/20171205.geojson",
+		"./data/20171206.geojson",
+		"./data/20171207.geojson"
+		]);
+	*/
+	
+	/*
+	addActionGroup([
+		"./data/20171201.geojson",
+		"./data/20171202.geojson", "./data/20171203.geojson",
+		"./data/20171204.geojson", "./data/20171205.geojson"
+		],'12/01-05');
+
+	addActionGroup([
+		"./data/20171206.geojson",
+		"./data/20171207.geojson","./data/20171208.geojson",
+		"./data/20171209.geojson","./data/20171210.geojson"
+		],'12/06-10');
+
+	addActionGroup([
+		"./data/20171211.geojson",
+		"./data/20171212.geojson","./data/20171213.geojson",
+		"./data/20171214.geojson","./data/20171215.geojson"
+		],'12/11-15');
+
+	addActionGroup([
+		"./data/20171216.geojson","./data/20171217.geojson",
+		"./data/20171218.geojson","./data/20171219.geojson",
+		],'12/16-');
+	*/
+
+	var geoPoints = [];
+	for(var i=1; i<20; i++) {
+		var day = ('00'+i).slice(-2);
+		var file = "./data/201712"+day+".geojson";
+
+		d3.json(file, function(err, data) {
+			if (err) { 
+				console.log(err); 
+			}
+			else {
+				data.features.forEach(function(feature) {
+					var intensity = 5;
+					if (feature.properties.action == "火災出動") {
+						intensity = 50;
+					}
+					else if (feature.properties.action == "車両火災出動") {
+						intensity = 50;
+					}
+					else if (feature.properties.action == "ガス漏れ出動") {
+						intensity = 30;
+					}
+					else if (feature.properties.action == "救助出動") {
+						intensity = 30;
+					}
+
+					lat = feature.geometry.coordinates[1];
+					lon = feature.geometry.coordinates[0];
+					
+					geoPoints.push([lat, lon, intensity]);
+				});
+			}
+		});
+	};
+
+	var options = {radius: 15, blur: 15, maxZoom: 11}
+	var heatLayer = L.heatLayer(geoPoints,options);
+	heatLayer.addTo(map);
+
+	var dateFormat = d3.timeFormat("%Y%m%d");
+	console.log(dateFormat(new Date(2017, 11, 1)));
+
 </script>
 
 </html>
