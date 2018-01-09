@@ -99,17 +99,19 @@ html, body  {
 	info.addTo(map);
 
 	//レジェンドの描画
-	var legend = L.control({position: 'bottomleft'});
-	legend.onAdd = function (map) {
-		var div = L.DomUtil.create('div', 'info action'),
-			colors = ['red','lime','orange','blue','yellow','magenta'];
-			labels = ['火災','警戒','車両火災','救助','ガス漏れ','救急隊支援'];
-			for(var i=0; i<labels.length; i++) {
-				div.innerHTML += '<i style="background:'+ colors[i] +'"></i>' +labels[i] +'<br/>';
-			}
-	    return div;
-	};
-	legend.addTo(map);
+	function showLegend() {
+		var legend = L.control({position: 'bottomleft'});
+		legend.onAdd = function (map) {
+			var div = L.DomUtil.create('div', 'info action'),
+				colors = ['red','lime','orange','blue','yellow','magenta'];
+				labels = ['火災','警戒','車両火災','救助','ガス漏れ','救急隊支援'];
+				for(var i=0; i<labels.length; i++) {
+					div.innerHTML += '<i style="background:'+ colors[i] +'"></i>' +labels[i] +'<br/>';
+				}
+		    return div;
+		};
+		legend.addTo(map);
+	}
 
 	function geoJsonPoint(data){
 		var geoJson = L.geoJson(data,{
@@ -151,36 +153,23 @@ html, body  {
 		});
 	}
 
-	addActionGroup([
-		"./data/20171201.geojson",
-		"./data/20171202.geojson", "./data/20171203.geojson",
-		"./data/20171204.geojson", "./data/20171205.geojson"
-		],'12/01-05');
+	group1 = ["./data/20171201.geojson","./data/20171202.geojson","./data/20171203.geojson","./data/20171204.geojson","./data/20171205.geojson"];
+	group2 = ["./data/20171206.geojson","./data/20171207.geojson","./data/20171208.geojson","./data/20171209.geojson","./data/20171210.geojson"];
+	group3 = ["./data/20171211.geojson","./data/20171212.geojson","./data/20171213.geojson","./data/20171214.geojson","./data/20171215.geojson"];
+	group4 = ["./data/20171216.geojson","./data/20171217.geojson","./data/20171218.geojson","./data/20171219.geojson","./data/20171220.geojson"];
+	group5 = ["./data/20171221.geojson","./data/20171222.geojson","./data/20171223.geojson","./data/20171224.geojson","./data/20171225.geojson"];
+	group6 = ["./data/20171226.geojson","./data/20171227.geojson","./data/20171228.geojson","./data/20171229.geojson", "./data/20171230.geojson","./data/20171231.geojson"];
 
-	addActionGroup([
-		"./data/20171206.geojson",
-		"./data/20171207.geojson","./data/20171208.geojson",
-		"./data/20171209.geojson","./data/20171210.geojson"
-		],'12/06-10');
+	group7 = ["./data/20180101.geojson","./data/20180102.geojson","./data/20180103.geojson","./data/20180104.geojson","./data/20180105.geojson"];
 
-	addActionGroup([
-		"./data/20171211.geojson",
-		"./data/20171212.geojson","./data/20171213.geojson",
-		"./data/20171214.geojson","./data/20171215.geojson"
-		],'12/11-15');
 
-	addActionGroup([
-		"./data/20171216.geojson","./data/20171217.geojson",
-		"./data/20171218.geojson","./data/20171219.geojson",
-		"./data/20171220.geojson"
-		],'12/16-20');
-	
-	addActionGroup([
-		"./data/20171221.geojson","./data/20171222.geojson",
-		"./data/20171223.geojson","./data/20171224.geojson",
-		"./data/20171225.geojson"
-		],'12/21-25');
-
+	addActionGroup(group1,'12/01-05');
+	addActionGroup(group2,'12/06-10');
+	addActionGroup(group3,'12/11-15');
+	addActionGroup(group4,'12/16-20');
+	addActionGroup(group5,'12/21-25');
+	addActionGroup(group6,'12/26-31');
+	addActionGroup(group7,'1/1-5');
 </script>
 
 </html>
